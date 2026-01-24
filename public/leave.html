@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leave Your Trace</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+<h1>Leave Your Trace</h1>
+<h2>Art is the only trace of our passage on Earth.</h2>
+<p class="intro">
+Leave your mark forever. Each message costs 1€ and will remain visible for everyone.
+</p>
+
+<form id="trace-form" enctype="multipart/form-data">
+<input type="text" name="name" placeholder="Your Name" required><br><br>
+<textarea name="message" placeholder="Write your message..." rows="4" required></textarea><br><br>
+<input type="file" name="image" accept="image/*"><br><br>
+<label>
+<input type="checkbox" name="terms" required>
+I accept <a href="terms.html" target="_blank">Terms and Conditions</a>
+</label><br><br>
+<button type="submit" class="cta">Leave Your Trace - 1€</button>
+</form>
+
+<div class="links">
+<p class="terms-link"><a href="terms.html" target="_blank">Terms and Conditions</a></p>
+<p class="back-home"><a href="index.html">Back to Home</a></p>
+</div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
