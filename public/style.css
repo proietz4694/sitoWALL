@@ -1,92 +1,62 @@
-/* ===== Corpo pagina ===== */
 body {
-font-family: Arial, sans-serif;
+margin: 0;
+font-family: 'Arial', sans-serif;
 background: url('textures/murales_texture.png') no-repeat center center fixed;
 background-size: cover;
 color: #fff;
-margin: 0;
-padding: 0;
 }
 
-/* ===== Titoli e sottotitoli ===== */
-h1 {
-font-size: 3em;
-margin-top: 20px;
+.container {
+max-width: 800px;
+margin: 0 auto;
+padding: 20px;
 text-align: center;
-text-shadow: 2px 2px #000;
 }
 
-h2 {
-font-size: 1.5em;
-text-align: center;
-text-shadow: 1px 1px #000;
-}
+h1 { font-size: 3em; margin-bottom: 0.2em; }
+h2 { font-size: 1.5em; margin-bottom: 1em; }
 
-.subtitle {
-text-align: center;
+.button {
+display: inline-block;
+padding: 10px 20px;
+background: #ffcc00;
+color: #000;
+text-decoration: none;
+font-weight: bold;
 margin-bottom: 20px;
 }
 
-/* ===== Pulsanti ===== */
-.cta {
-display: block;
-width: 200px;
-margin: 10px auto;
+input, textarea {
+width: 100%;
 padding: 10px;
-background: #ffcc00;
-color: #000;
-text-align: center;
-font-weight: bold;
-border-radius: 10px;
-text-decoration: none;
-cursor: pointer;
+margin: 5px 0;
+font-size: 1em;
 }
 
-/* ===== Link Terms & Back Home ===== */
-.links {
-text-align: center;
-margin-top: 10px;
+#messagesContainer {
+margin-top: 20px;
+text-align: left;
 }
 
-.terms-link a,
-.back-home a {
-color: #ffd700; /* oro */
-text-decoration: none;
-font-weight: bold;
-}
-
-/* ===== Contenitore form ===== */
-.container {
-max-width: 600px;
-margin: 0 auto;
-text-align: center;
-}
-
-/* ===== Muro permanente ===== */
-#wall {
-display: flex;
-flex-wrap: wrap;
-justify-content: center;
+.message {
+background: rgba(0,0,0,0.4);
 padding: 10px;
-}
-
-.trace {
-background: rgba(0, 0, 0, 0.6);
-margin: 5px;
-padding: 5px;
+margin-bottom: 10px;
 border-radius: 5px;
-width: 200px;
-word-wrap: break-word;
 }
 
-.trace img {
+.msg-image {
 max-width: 100%;
-border-radius: 5px;
 margin-top: 5px;
 }
 
-/* ===== Footer ===== */
-.footer {
+footer {
+margin-top: 40px;
 text-align: center;
-margin-top: 20px;
+}
+
+footer .terms, .back-home {
+color: #ffcc00;
+font-weight: bold;
+text-decoration: none;
 }

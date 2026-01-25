@@ -1,59 +1,31 @@
+document.addEventListener("DOMContentLoaded", () => {
 const form = document.getElementById("traceForm");
+if (!form) return;
 
 form.addEventListener("submit", async (e) => {
 e.preventDefault();
 
-const formData = new FormData(form);
-const name = formData.get("name").trim();
-const message = formData.get("message").trim();
-const imageFile = formData.get("image");
-const termsAccepted = formData.get("terms");
+const name = document.getElementById("name").value.trim();
+const text = document.getElementById("text").value.trim();
+const imageInput = document.getElementById("image");
 
-if (!name || !message) {
-alert("Please fill in all required fields.");
-return;
+if (!name || !text) return alert("Enter name and sentence.");
+
+const formData = new FormData();
+formData.append("name", name);
+formData.append("text", text);
+if (imageInput && imageInput.files.length > 0) {
+formData.append("image", imageInput.files[0]);
 }
 
-if (!termsAccepted) {
-alert("You must accept the Terms and Conditions.");
-return;
-}
-
-let imageData = null;
-
-if (imageFile && imageFile.size > 0) {
-const reader = new FileReader();
-reader.onload = async function () {
-imageData = reader.result;
-await sendData(name, message, imageData);
-};
-reader.readAsDataURL(imageFile);
-} else {
-await sendData(name, message, null);
-}
-});
-
-async function sendData(name, message, imageData) {
 try {
-const res = await fetch("/api/messages", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({ name, message, image: imageData })
-});
-
-const data = await res.json();
-
-if (data.success) {
-alert("Your trace has been saved!");
-window.location.href = "index.html";
-} else {
-alert("Error saving your trace.");
-}
-
+const res = await fetch("/api/add", { method: "POST", body: formData });
+const result = await res.json();
+if (result.success) window.location.href = "/";
+else alert("Error publishing. Try again.");
 } catch (err) {
 console.error(err);
 alert("Server error.");
 }
-}
+});
+});
