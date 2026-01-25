@@ -1,69 +1,85 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
-const cors = require("cors");
-const path = require("path");
-const multer = require("multer");
 const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+const multer = require("multer");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// Crea cartella uploads se non esiste
-if (!fs.existsSync("public/uploads")) fs.mkdirSync("public/uploads");
+// ---------- DATA SETUP ----------
+const dataDir = path.join(__dirname, "data");
+const dataFile = path.join(dataDir, "messages.json");
 
-// Multer per upload immagini
+// Create data folder/file if missing
+if (!fs.existsSync(dataDir)) {
+fs.mkdirSync(dataDir);
+}
+if (!fs.existsSync(dataFile)) {
+fs.writeFileSync(dataFile, JSON.stringify([]));
+}
+
+// Helpers
+function readMessages() {
+const raw = fs.readFileSync(dataFile, "utf-8");
+return JSON.parse(raw);
+}
+function saveMessages(messages) {
+fs.writeFileSync(dataFile, JSON.stringify(messages, null, 2));
+}
+
+// ---------- IMAGE UPLOAD ----------
 const storage = multer.diskStorage({
-destination: (req, file, cb) => cb(null, "public/uploads"),
-filename: (req, file, cb) => {
-const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-cb(null, uniqueSuffix + path.extname(file.originalname));
+destination: function (req, file, cb) {
+const uploadDir = path.join(__dirname, "public", "uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+cb(null, uploadDir);
+},
+filename: function (req, file, cb) {
+const uniqueName = Date.now() + "-" + file.originalname;
+cb(null, uniqueName);
 },
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Database
-const db = new sqlite3.Database("./wewerehere.db");
+// ---------- API ----------
 
-// Crea tabella tracce
-db.serialize(() => {
-db.run(`
-CREATE TABLE IF NOT EXISTS traces (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-name TEXT,
-message TEXT,
-image TEXT,
-created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)
-`);
-});
+// Add message
+app.post("/api/add", upload.single("image"), (req, res) => {
+const { name, text } = req.body;
 
-// API per leggere tutte le tracce
-app.get("/api/traces", (req, res) => {
-db.all("SELECT * FROM traces ORDER BY id DESC", [], (err, rows) => {
-if (err) return res.json([]);
-res.json(rows || []);
-});
-});
-
-// API per inserire nuova traccia
-app.post("/api/traces", upload.single("image"), (req, res) => {
-const { name, message } = req.body;
-let imagePath = req.file ? "/uploads/" + req.file.filename : "";
-
-db.run(
-"INSERT INTO traces (name, message, image) VALUES (?, ?, ?)",
-[name, message, imagePath],
-function (err) {
-if (err) return res.json({ success: false });
-res.json({ success: true, id: this.lastID });
+if (!name || !text) {
+return res.json({ success: false, message: "Missing fields" });
 }
-);
+
+const messages = readMessages();
+
+const newMessage = {
+id: Date.now(),
+name,
+text,
+image: req.file ? `/uploads/${req.file.filename}` : null,
+createdAt: new Date().toISOString(),
+};
+
+messages.push(newMessage);
+saveMessages(messages);
+
+res.json({ success: true });
 });
 
+// Get all messages
+app.get("/api/messages", (req, res) => {
+const messages = readMessages();
+res.json(messages);
+});
+
+// ---------- START ----------
 app.listen(PORT, () => {
-console.log(`We Were Here backend running on http://localhost:${PORT}`);
+console.log("We Were Here running on port " + PORT);
 });

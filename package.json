@@ -1,28 +1,15 @@
 {
-  "name": "we-were-here",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "multer": "^2.0.2",
-    "sqlite3": "^5.1.7"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/proietz/we-were-here.git"
-  },
-  "bugs": {
-    "url": "https://github.com/proietz/we-were-here/issues"
-  },
-  "homepage": "https://github.com/proietz/we-were-here#readme"
+"name": "we-were-here",
+"version": "1.0.0",
+"description": "Leave a trace. A sentence. Forever.",
+"main": "server.js",
+"type": "commonjs",
+"scripts": {
+"start": "node server.js"
+},
+"dependencies": {
+"express": "^4.18.2",
+"cors": "^2.8.5",
+"multer": "^1.4.5-lts.1"
+}
 }
