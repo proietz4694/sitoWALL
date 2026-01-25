@@ -1,3 +1,4 @@
+/* Corpo pagina */
 body {
 margin: 0;
 font-family: 'Arial', sans-serif;
@@ -6,6 +7,7 @@ background-size: cover;
 color: #fff;
 }
 
+/* Contenitore centrale */
 .container {
 max-width: 800px;
 margin: 0 auto;
@@ -13,9 +15,19 @@ padding: 20px;
 text-align: center;
 }
 
-h1 { font-size: 3em; margin-bottom: 0.2em; }
-h2 { font-size: 1.5em; margin-bottom: 1em; }
+/* Titoli */
+h1 {
+font-size: 3em;
+margin-bottom: 0.2em;
+text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+}
+h2 {
+font-size: 1.5em;
+margin-bottom: 1em;
+text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+}
 
+/* Pulsante leave your trace */
 .button {
 display: inline-block;
 padding: 10px 20px;
@@ -23,40 +35,74 @@ background: #ffcc00;
 color: #000;
 text-decoration: none;
 font-weight: bold;
+border-radius: 5px;
 margin-bottom: 20px;
+box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
 }
 
+/* Input ricerca e leave page */
 input, textarea {
 width: 100%;
 padding: 10px;
 margin: 5px 0;
 font-size: 1em;
+border-radius: 5px;
+border: none;
+outline: none;
 }
 
-#messagesContainer {
+/* Container per frasi */
+#random-trace-display {
 margin-top: 20px;
 text-align: left;
 }
 
+/* Singolo messaggio */
 .message {
 background: rgba(0,0,0,0.4);
 padding: 10px;
 margin-bottom: 10px;
 border-radius: 5px;
+box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
+/* Immagini opzionali nelle frasi */
 .msg-image {
 max-width: 100%;
 margin-top: 5px;
+border-radius: 5px;
+box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
+/* Footer */
 footer {
 margin-top: 40px;
 text-align: center;
 }
 
-footer .terms, .back-home {
+footer .terms a, .back-home a {
 color: #ffcc00;
 font-weight: bold;
 text-decoration: none;
+}
+
+/* Link leave page */
+.links {
+margin-top: 20px;
+}
+
+/* Pulsante submit leave page */
+.cta {
+padding: 10px 20px;
+background: #ffcc00;
+color: #000;
+font-weight: bold;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+}
+
+.cta:hover {
+background: #ffd633;
 }

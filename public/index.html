@@ -11,38 +11,56 @@
 <h2>Your thoughts, your art.</h2>
 <a href="leave.html" class="button">Leave your trace</a>
 
+<!-- Ricerca frasi -->
 <input type="text" id="searchInput" placeholder="Search by name or keyword..." />
 
-<div id="messagesContainer"></div>
+<!-- Container per le frasi -->
+<div id="random-trace-display"></div>
 
 <footer>
-<p class="terms">Terms and Conditions</p>
+<p class="terms"><a href="terms.html" target="_blank">Terms and Conditions</a></p>
 <p>All rights reserved</p>
 </footer>
 </div>
 
+<!-- JS per caricare le frasi -->
 <script>
 async function loadMessages(filter="") {
+try {
 const res = await fetch("/api/messages");
 let messages = await res.json();
+
 if(filter) {
 filter = filter.toLowerCase();
-messages = messages.filter(m => m.name.toLowerCase().includes(filter) || m.text.toLowerCase().includes(filter));
+messages = messages.filter(m =>
+m.name.toLowerCase().includes(filter) || m.text.toLowerCase().includes(filter)
+);
 }
-const container = document.getElementById("messagesContainer");
+
+const container = document.getElementById("random-trace-display");
 container.innerHTML = "";
+
 messages.forEach(msg => {
 const div = document.createElement("div");
 div.className = "message";
-div.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}` + (msg.image ? `<br><img src="${msg.image}" class="msg-image">` : "");
+div.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}` +
+(msg.image ? `<br><img src="${msg.image}" class="msg-image">` : "");
 container.appendChild(div);
 });
+} catch(err) {
+console.error("Error loading messages:", err);
+}
 }
 
+// Carica messaggi all'avvio
 document.addEventListener("DOMContentLoaded", () => {
 loadMessages();
-const search = document.getElementById("searchInput");
-search.addEventListener("input", () => loadMessages(search.value));
+
+// Ricerca dinamica
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", () => {
+loadMessages(searchInput.value);
+});
 });
 </script>
 </body>

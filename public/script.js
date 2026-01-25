@@ -14,10 +14,7 @@ body: formData,
 if (res.success) {
 alert("Your trace has been added!");
 traceForm.reset();
-
-// Aggiorniamo il muro solo se esiste
-const wall = document.getElementById("wall");
-if (wall) loadTraces();
+loadTraces(); // mostra subito nel muro
 } else {
 alert("Error adding trace.");
 }
@@ -25,10 +22,10 @@ alert("Error adding trace.");
 });
 }
 
-// ----- Muro permanente (solo homepage) -----
+// ----- Muro permanente -----
 function loadTraces() {
 const wall = document.getElementById("wall");
-if (!wall) return; // Se non esiste, esci
+if (!wall) return;
 
 fetch("/api/traces")
 .then((res) => res.json())
@@ -47,8 +44,5 @@ wall.appendChild(div);
 });
 }
 
-// ----- Carica le tracce solo se siamo sulla homepage -----
-document.addEventListener("DOMContentLoaded", () => {
-const wall = document.getElementById("wall");
-if (wall) loadTraces();
-});
+// Carica le tracce all'apertura della pagina
+document.addEventListener("DOMContentLoaded", loadTraces);

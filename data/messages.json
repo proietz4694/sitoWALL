@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "id": 1769308981895,
+    "name": "Fabio",
+    "text": "f",
+    "image": null,
+    "createdAt": "2026-01-25T02:43:01.895Z"
+  },
+  {
+    "id": 1769309023803,
+    "name": "Fabio",
+    "text": "ok lets goooo",
+    "image": null,
+    "createdAt": "2026-01-25T02:43:43.803Z"
+  },
+  {
+    "id": 1769309206476,
+    "name": "john arrow",
+    "text": "life is so beautiful",
+    "image": null,
+    "createdAt": "2026-01-25T02:46:46.476Z"
+  },
+  {
+    "id": 1769309245877,
+    "name": "jaden smith",
+    "text": "i love pokemon",
+    "image": "/uploads/1769309245875-tipi.png",
+    "createdAt": "2026-01-25T02:47:25.877Z"
+  }
+]
