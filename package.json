@@ -1,15 +1,1 @@
-{
-"name": "we-were-here",
-"version": "1.0.0",
-"description": "Leave a trace. A sentence. Forever.",
-"main": "server.js",
-"type": "commonjs",
-"scripts": {
-"start": "node server.js"
-},
-"dependencies": {
-"express": "^4.18.2",
-"cors": "^2.8.5",
-"multer": "^1.4.5-lts.1"
-}
-}
+{"name":"we-were-here","version":"1.0.0","description":"Leave a trace. A sentence. Forever.","main":"server.js","type":"commonjs","scripts":{"start":"node server.js"},"dependencies":{"cors":"^2.8.5","express":"^4.18.2","multer":"^1.4.5-lts.1","stripe":"^20.2.0"}}

@@ -1,64 +1,84 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const multer = require("multer");
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const stripe = require('stripe')('***REMOVED***');
+
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// JSON storage
-const dataDir = path.join(__dirname, "data");
-const dataFile = path.join(dataDir, "messages.json");
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
-if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, JSON.stringify([]));
+const db = new sqlite3.Database('./pixelkingdom.db');
 
-function readMessages() {
-return JSON.parse(fs.readFileSync(dataFile, "utf-8"));
+db.serialize(() => {
+db.run(`CREATE TABLE IF NOT EXISTS cells (
+cellId INTEGER PRIMARY KEY,
+text TEXT,
+image TEXT,
+link TEXT,
+color TEXT,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+});
+
+const FREE_MODE = true;
+
+app.post('/api/leave-trace', (req, res) => {
+const { cellId, text, image, link, color } = req.body;
+
+if (FREE_MODE) {
+db.run(
+'INSERT INTO cells (cellId, text, image, link, color) VALUES (?, ?, ?, ?, ?)',
+[cellId, text, image, link, color],
+err => {
+if (err) return res.json({ success: false, error: err });
+res.json({ success: true, free: true });
 }
-function saveMessages(messages) {
-fs.writeFileSync(dataFile, JSON.stringify(messages, null, 2));
+);
+} else {
+res.json({ pay: true });
 }
+});
 
-// Upload images
-const storage = multer.diskStorage({
-destination: (req, file, cb) => {
-const uploadDir = path.join(__dirname, "public/uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-cb(null, uploadDir);
+app.post('/api/create-checkout-session', async (req, res) => {
+const { cellId, text, image, link, color } = req.body;
+
+try {
+const session = await stripe.checkout.sessions.create({
+payment_method_types: ['card'],
+line_items: [{
+price_data: {
+currency: 'eur',
+product_data: {
+name: `Leave Your Trace - cella #${cellId}`,
 },
-filename: (req, file, cb) => {
-cb(null, Date.now() + "-" + file.originalname);
+unit_amount: 100,
 },
-});
-const upload = multer({ storage });
-
-// POST add message
-app.post("/api/add", upload.single("image"), (req, res) => {
-const name = req.body.name;
-const text = req.body.text;
-
-if (!name || !text) return res.json({ success: false });
-
-const messages = readMessages();
-messages.push({
-id: Date.now(),
-name,
-text,
-image: req.file ? `/uploads/${req.file.filename}` : null,
-createdAt: new Date().toISOString(),
-});
-saveMessages(messages);
-res.json({ success: true });
+quantity: 1,
+}],
+mode: 'payment',
+success_url: `https://wewerehere.co/?success=true&cellId=${cellId}&text=${encodeURIComponent(text)}&image=${encodeURIComponent(image)}&link=${encodeURIComponent(link)}&color=${encodeURIComponent(color)}`,
+cancel_url: `https://wewerehere.co/?canceled=true`,
 });
 
-// GET all messages
-app.get("/api/messages", (req, res) => {
-const messages = readMessages();
-res.json(messages);
+res.json({ url: session.url });
+} catch (err) {
+console.log(err);
+res.status(500).json({ error: 'Impossibile creare sessione' });
+}
 });
 
-app.listen(PORT, () => console.log("Server running on port " + PORT));
+app.get('/api/loadCells', (req, res) => {
+db.all('SELECT * FROM cells', [], (err, rows) => {
+if (err) return res.json([]);
+res.json(rows);
+});
+});
+
+app.listen(PORT, () => {
+console.log(`Pixel Kingdom backend avviato su http://localhost:${PORT}`);
+});
