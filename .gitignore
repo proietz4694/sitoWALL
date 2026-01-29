@@ -1,2 +1,6 @@
 node_modules
-wewerehere.db
+.env
+*.db
+*.sqlite
+data/
+.DS_Store

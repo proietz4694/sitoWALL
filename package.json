@@ -1,1 +1,21 @@
-{"name":"we-were-here","version":"1.0.0","description":"Leave a trace. A sentence. Forever.","main":"server.js","type":"commonjs","scripts":{"start":"node server.js"},"dependencies":{"cors":"^2.8.5","express":"^4.18.2","multer":"^1.4.5-lts.1","stripe":"^20.2.0"}}
+{
+    "name": "we-were-here",
+    "version": "1.0.0",
+    "description": "Leave a trace. A sentence. Forever.",
+    "main": "server.js",
+    "type": "commonjs",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "better-sqlite3": "^12.6.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.18.2",
+        "multer": "^1.4.5-lts.1",
+        "stripe": "^20.3.0"
+    },
+    "devDependencies": {
+        "@flydotio/dockerfile": "^0.7.10"
+    }
+}
