@@ -103,7 +103,7 @@ app.post('/api/create-checkout-session', upload.single('image'), async (req, res
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `${req.headers.origin}/index.html?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${req.headers.origin}/api/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${req.headers.origin}/leave.html`,
         });
 
@@ -150,6 +150,64 @@ app.post('/api/webhook', async (req, res) => {
 
     res.json({ received: true });
 });
+
+// --- ADMIN ENDPOINTS (per debug/gestione) ---
+
+// Vedi tutti i messaggi (inclusi pending)
+app.get('/api/admin/all-messages', (req, res) => {
+    try {
+        const messages = db.prepare('SELECT * FROM messages ORDER BY created_at DESC').all();
+        res.json(messages);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Approva manualmente un messaggio
+app.post('/api/admin/approve/:id', (req, res) => {
+    try {
+        const result = db.prepare("UPDATE messages SET payment_status = 'paid' WHERE id = ?").run(req.params.id);
+        res.json({ success: result.changes > 0 });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Approva TUTTI i messaggi pending (per recupero)
+app.post('/api/admin/approve-all', (req, res) => {
+    try {
+        const result = db.prepare("UPDATE messages SET payment_status = 'paid' WHERE payment_status = 'pending'").run();
+        res.json({ success: true, updated: result.changes });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Callback da Stripe - quando l'utente torna dalla pagina di pagamento
+app.get('/api/payment-success', async (req, res) => {
+    const sessionId = req.query.session_id;
+    if (!sessionId) {
+        return res.redirect('/index.html?error=no_session');
+    }
+
+    try {
+        // Verifica lo stato del pagamento con Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status === 'paid') {
+            // Aggiorna il messaggio nel database
+            db.prepare("UPDATE messages SET payment_status = 'paid' WHERE stripe_session_id = ?").run(sessionId);
+            console.log(`Payment confirmed via callback for session ${sessionId}`);
+        }
+
+        res.redirect('/index.html?success=true');
+    } catch (err) {
+        console.error('Error verifying payment:', err);
+        res.redirect('/index.html?error=verification_failed');
+    }
+});
+
+
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running with Stripe ready on port ${PORT}`);
