@@ -173,10 +173,10 @@ app.post('/api/admin/approve/:id', (req, res) => {
     }
 });
 
-// Approva TUTTI i messaggi pending (per recupero) - GET per facilità
+// Approva TUTTI i messaggi (per recupero) - FORZA TUTTI A PAID
 app.get('/api/admin/approve-all', (req, res) => {
     try {
-        const result = db.prepare("UPDATE messages SET payment_status = 'paid' WHERE payment_status = 'pending'").run();
+        const result = db.prepare("UPDATE messages SET payment_status = 'paid'").run();
         res.json({ success: true, updated: result.changes });
     } catch (err) {
         res.status(500).json({ error: err.message });
