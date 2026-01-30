@@ -176,10 +176,18 @@ app.post('/api/admin/approve/:id', (req, res) => {
 // Approva TUTTI i messaggi (per recupero) - FORZA TUTTI A PAID
 app.get('/api/admin/approve-all', (req, res) => {
     try {
+        const before = db.prepare("SELECT COUNT(*) as count FROM messages").get();
         const result = db.prepare("UPDATE messages SET payment_status = 'paid'").run();
-        res.json({ success: true, updated: result.changes });
+        const after = db.prepare("SELECT * FROM messages").all();
+        res.json({
+            success: true,
+            updated: result.changes,
+            totalBefore: before.count,
+            messagesAfter: after,
+            dbPath: dbPath
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message, stack: err.stack });
     }
 });
 
