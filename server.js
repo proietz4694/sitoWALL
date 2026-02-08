@@ -5,18 +5,12 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 const multer = require('multer');
-const stripeKey = process.env.STRIPE_SECRET_KEY;
-if (!stripeKey) {
-    console.warn("⚠️ ATTENZIONE: STRIPE_SECRET_KEY non configurata. Il sistema funzionerà in modalità simulazione.");
-}
-const stripe = require('stripe')(stripeKey || 'sk_test_placeholder');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware (Nota: il webhook di Stripe ha bisogno del body raw)
+// Middleware
 app.use(cors());
-app.use('/api/webhook', express.raw({ type: 'application/json' })); // Per il webhook
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -41,8 +35,6 @@ CREATE TABLE IF NOT EXISTS messages (
     name TEXT,
     text TEXT,
     image TEXT,
-    stripe_session_id TEXT,
-    payment_status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )
 `).run();
@@ -60,19 +52,19 @@ const upload = multer({ storage });
 
 // --- API ENDPOINTS ---
 
+// GET all messages (FREE - no payment required)
 app.get('/api/messages', (req, res) => {
     try {
-        // In modalita' test (senza chiave stripe reale) mostriamo tutto per debug.
-        // In produzione mostriamo solo payment_status = 'paid'
-        const filter = process.env.STRIPE_SECRET_KEY ? "WHERE payment_status = 'paid'" : "";
-        const messages = db.prepare(`SELECT * FROM messages ${filter} ORDER BY created_at DESC`).all();
+        const messages = db.prepare('SELECT * FROM messages ORDER BY created_at DESC').all();
         res.json(messages);
     } catch (err) {
-        res.status(500).json({ success: false });
+        console.error('Error fetching messages:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
-app.post('/api/create-checkout-session', upload.single('image'), async (req, res) => {
+// POST new message (FREE - no payment required)
+app.post('/api/messages', upload.single('image'), (req, res) => {
     try {
         const { name, text } = req.body;
         const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
@@ -81,79 +73,25 @@ app.post('/api/create-checkout-session', upload.single('image'), async (req, res
             return res.status(400).json({ error: 'Name and text required' });
         }
 
-        if (!process.env.STRIPE_SECRET_KEY) {
-            // Se non c'e' la chiave, simuliamo il successo per permettere test locali
-            console.log("Stripe Key missing. Simulating success...");
-            db.prepare('INSERT INTO messages (name, text, image, payment_status) VALUES (?, ?, ?, ?)')
-                .run(name, text, imagePath, 'paid');
-            return res.json({ id: 'dummy_session_id', url: '/index.html' });
-        }
+        const result = db.prepare('INSERT INTO messages (name, text, image) VALUES (?, ?, ?)')
+            .run(name, text, imagePath);
 
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'eur',
-                    product_data: {
-                        name: 'Trace on the Wall',
-                        description: `Message from ${name}`,
-                    },
-                    unit_amount: 100, // 1.00 EUR
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            success_url: `${req.headers.origin}/api/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin}/leave.html`,
+        console.log(`New message from ${name}: "${text.substring(0, 50)}..."`);
+
+        res.json({
+            success: true,
+            id: result.lastInsertRowid,
+            message: 'Your trace has been left successfully!'
         });
-
-        db.prepare('INSERT INTO messages (name, text, image, stripe_session_id, payment_status) VALUES (?, ?, ?, ?, ?)')
-            .run(name, text, imagePath, session.id, 'pending');
-
-        res.json({ id: session.id, url: session.url });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        console.error('Error saving message:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
-});
-
-// --- STRIPE WEBHOOK ---
-app.post('/api/webhook', async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    let event;
-
-    try {
-        if (endpointSecret) {
-            event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-        } else {
-            // Se non c'e' secret, leggiamo il body direttamente (solo per test/debug)
-            event = JSON.parse(req.body.toString());
-        }
-    } catch (err) {
-        console.error(`Webhook Error: ${err.message}`);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        console.log(`Payment confirmed for session ${session.id}`);
-
-        try {
-            db.prepare("UPDATE messages SET payment_status = 'paid' WHERE stripe_session_id = ?")
-                .run(session.id);
-        } catch (err) {
-            console.error("Database update error in webhook:", err);
-        }
-    }
-
-    res.json({ received: true });
 });
 
 // --- ADMIN ENDPOINTS (per debug/gestione) ---
 
-// Vedi tutti i messaggi (inclusi pending)
+// Vedi tutti i messaggi
 app.get('/api/admin/all-messages', (req, res) => {
     try {
         const messages = db.prepare('SELECT * FROM messages ORDER BY created_at DESC').all();
@@ -163,60 +101,16 @@ app.get('/api/admin/all-messages', (req, res) => {
     }
 });
 
-// Approva manualmente un messaggio
-app.post('/api/admin/approve/:id', (req, res) => {
+// Elimina un messaggio
+app.delete('/api/admin/messages/:id', (req, res) => {
     try {
-        const result = db.prepare("UPDATE messages SET payment_status = 'paid' WHERE id = ?").run(req.params.id);
+        const result = db.prepare('DELETE FROM messages WHERE id = ?').run(req.params.id);
         res.json({ success: result.changes > 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Approva TUTTI i messaggi (per recupero) - FORZA TUTTI A PAID
-app.get('/api/admin/approve-all', (req, res) => {
-    try {
-        const before = db.prepare("SELECT COUNT(*) as count FROM messages").get();
-        const result = db.prepare("UPDATE messages SET payment_status = 'paid'").run();
-        const after = db.prepare("SELECT * FROM messages").all();
-        res.json({
-            success: true,
-            updated: result.changes,
-            totalBefore: before.count,
-            messagesAfter: after,
-            dbPath: dbPath
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message, stack: err.stack });
-    }
-});
-
-// Callback da Stripe - quando l'utente torna dalla pagina di pagamento
-app.get('/api/payment-success', async (req, res) => {
-    const sessionId = req.query.session_id;
-    if (!sessionId) {
-        return res.redirect('/index.html?error=no_session');
-    }
-
-    try {
-        // Verifica lo stato del pagamento con Stripe
-        const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-        if (session.payment_status === 'paid') {
-            // Aggiorna il messaggio nel database
-            db.prepare("UPDATE messages SET payment_status = 'paid' WHERE stripe_session_id = ?").run(sessionId);
-            console.log(`Payment confirmed via callback for session ${sessionId}`);
-        }
-
-        res.redirect('/index.html?success=true');
-    } catch (err) {
-        console.error('Error verifying payment:', err);
-        res.redirect('/index.html?error=verification_failed');
-    }
-});
-
-
-
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running with Stripe ready on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT} - FREE MODE (no payments)`);
 });
