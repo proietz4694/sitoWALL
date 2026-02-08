@@ -1,19 +1,12 @@
-# fly.toml app configuration file generated for we-were-here on 2026-01-29T02:00:13+01:00
+# fly.toml app configuration file generated for sitowall-93zraa on 2026-02-08T20:57:31Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'we-were-here'
-primary_region = 'fra'
+app = 'sitowall-93zraa'
+primary_region = 'iad'
 
 [build]
-
-[[mounts]]
-  source = 'data'
-  destination = '/data'
-  auto_extend_size_threshold = 80
-  auto_extend_size_increment = '1GB'
-  auto_extend_size_limit = '10GB'
 
 [http_service]
   internal_port = 3000
