@@ -5,26 +5,47 @@
 <title>We Were Here</title>
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 <div class="container">
+
 <h1>We Were Here</h1>
 <h2>Your thoughts, your art.</h2>
 <a href="leave.html" class="button">Leave your trace</a>
 
-<!-- Ricerca frasi -->
+<!-- 🔥 MESSAGGIO CREATOR VISIBILE -->
+<div id="creator-message" style="
+margin: 40px 0;
+padding: 30px;
+background-color: #111;
+color: #fff;
+border-radius: 15px;
+text-align: center;
+font-size: 17px;
+line-height: 1.7;
+box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+">
+Loading message...
+</div>
+
+<!-- Ricerca -->
 <input type="text" id="searchInput" placeholder="Search by name or keyword..." />
 
-<!-- Container per le frasi -->
+<!-- Messaggi -->
 <div id="random-trace-display"></div>
 
 <footer>
-<p class="terms"><a href="terms.html" target="_blank">Terms and Conditions</a></p>
+<p class="terms">
+<a href="terms.html" target="_blank">Terms and Conditions</a>
+</p>
 <p>All rights reserved</p>
 </footer>
+
 </div>
 
-<!-- JS per caricare le frasi -->
 <script>
+
+// ===== CARICAMENTO MESSAGGI =====
 async function loadMessages(filter="") {
 try {
 const res = await fetch("/api/messages");
@@ -33,7 +54,8 @@ let messages = await res.json();
 if(filter) {
 filter = filter.toLowerCase();
 messages = messages.filter(m =>
-m.name.toLowerCase().includes(filter) || m.text.toLowerCase().includes(filter)
+m.name.toLowerCase().includes(filter) ||
+m.text.toLowerCase().includes(filter)
 );
 }
 
@@ -43,25 +65,75 @@ container.innerHTML = "";
 messages.forEach(msg => {
 const div = document.createElement("div");
 div.className = "message";
-div.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}` +
+div.innerHTML =
+`<strong>${msg.name}:</strong> ${msg.text}` +
 (msg.image ? `<br><img src="${msg.image}" class="msg-image">` : "");
 container.appendChild(div);
 });
+
+return messages;
+
 } catch(err) {
 console.error("Error loading messages:", err);
+return [];
 }
 }
 
-// Carica messaggi all'avvio
+
+// ===== CONTATORI =====
+async function updateCounters() {
+try {
+const res = await fetch("/api/messages");
+const messages = await res.json();
+
+const totalCount = messages.length;
+
+const startOfDay = new Date();
+startOfDay.setHours(0,0,0,0);
+
+const dailyCount = messages.filter(m =>
+new Date(m.created_at) >= startOfDay
+).length;
+
+const messageDiv = document.getElementById("creator-message");
+
+messageDiv.innerHTML = `
+<div style="font-size:20px; font-weight:600; margin-bottom:15px;">
+Hello everyone 👋 I’m the creator of <strong>WeWereHere.co</strong>
+</div>
+
+<div style="margin-bottom:12px;">
+So far, <span style="font-size:26px; font-weight:bold;">${totalCount}</span> confessions have been shared here.
+</div>
+
+
+<div style="opacity:0.9;">
+Sharing thoughts, doubts, and life stories.
+Remember: Here nobody judges, and you are never alone.
+</div>
+`;
+} catch(err) {
+console.error("Error updating counters:", err);
+}
+}
+
+
+// ===== AVVIO =====
 document.addEventListener("DOMContentLoaded", () => {
+
 loadMessages();
 
-// Ricerca dinamica
 const searchInput = document.getElementById("searchInput");
 searchInput.addEventListener("input", () => {
 loadMessages(searchInput.value);
 });
+
+updateCounters();
+setInterval(updateCounters, 60000);
+
 });
+
 </script>
+
 </body>
 </html>
